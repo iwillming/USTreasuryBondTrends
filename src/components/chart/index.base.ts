@@ -9,29 +9,35 @@ export class ChartsBase extends React.PureComponent<any, State> {
   };
 
   async componentDidMount() {
-    const date = new Date();
-    const { date: preYearDate, data: preYearData } = await this.getData(
-      // daily_treasury_bill_rates
-      // daily_treasury_yield_curve
-      // daily_treasury_real_yield_curve
-      "daily_treasury_yield_curve",
-      date.getFullYear() - 1
-    );
-    const { date: curYearDate, data: curYearData } = await this.getData(
-      "daily_treasury_yield_curve",
-      date.getFullYear()
-    );
-    this.updateState(
-      [...preYearDate, ...curYearDate],
-      [...preYearData, ...curYearData]
-    );
+    const targetYear = 2015,
+      curYear = new Date().getFullYear();
+    let reqs = [],
+      dateRets = [],
+      dataRets = [];
+    for (let i = targetYear; i <= curYear; i++) {
+      reqs.push(
+        this.getData(
+          // daily_treasury_bill_rates
+          // daily_treasury_yield_curve
+          // daily_treasury_real_yield_curve
+          "daily_treasury_yield_curve",
+          i
+        )
+      );
+    }
+    const rets = await Promise.all(reqs);
+    rets.forEach(({ date, data }) => {
+      dateRets = dateRets.concat(date);
+      dataRets = dataRets.concat(data);
+    });
+    this.updateState(dateRets, dataRets);
   }
 
   /**
    * 获取数据
    * @param curveType 类型
    * @param year 年份
-   * @returns 
+   * @returns
    */
   async getData(curveType, year) {
     const hostname = "https://home.treasury.gov"; // https://home.treasury.gov
